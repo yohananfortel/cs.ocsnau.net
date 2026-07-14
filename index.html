@@ -1,13 +1,500 @@
-<!DOCTYPE html>
-<html lang="">
-  <head>
-    <meta charset="UTF-8">
-    <link rel="icon" href="/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quiz Game</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111319;
+      --panel: #1c2029;
+      --panel-2: #252b36;
+      --text: #f4f6fb;
+      --muted: #aab3c2;
+      --accent: #4fc3f7;
+      --accent-2: #ffd166;
+      --good: #57d68d;
+      --bad: #ff6b6b;
+      --line: #343b4a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--line);
+      background: #171a22;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: 0;
+    }
+
+    .brand span,
+    .status {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status strong {
+      color: var(--accent-2);
+    }
+
+    .layout {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 20px;
+    }
+
+    .main,
+    .side {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .screen-title {
+      margin: 0 0 8px;
+      font-size: 26px;
+    }
+
+    .hint {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    label {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+    }
+
+    input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #10131a;
+      color: var(--text);
+    }
+
+    .primary,
+    .answer {
+      min-height: 44px;
+      border: 0;
+      border-radius: 6px;
+      cursor: pointer;
+      color: #071018;
+      background: var(--accent);
+      font-weight: 700;
+    }
+
+    .primary:disabled,
+    .answer:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      color: var(--muted);
+    }
+
+    .timer {
+      color: var(--accent-2);
+      font-weight: 800;
+    }
+
+    .question {
+      margin: 0 0 18px;
+      font-size: 22px;
+      line-height: 1.35;
+    }
+
+    .answers {
+      display: grid;
+      gap: 10px;
+    }
+
+    .answer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--line);
+      text-align: left;
+    }
+
+    .answer:hover:not(:disabled) {
+      border-color: var(--accent);
+    }
+
+    .answer-key {
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 32px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      color: #071018;
+      background: var(--accent-2);
+      font-weight: 800;
+    }
+
+    .message {
+      margin-top: 16px;
+      color: var(--muted);
+    }
+
+    .good {
+      color: var(--good);
+    }
+
+    .bad {
+      color: var(--bad);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .empty {
+      color: var(--muted);
+      padding: 10px 0;
+    }
+
+    @media (max-width: 860px) {
+      .layout {
+        grid-template-columns: 1fr;
+        padding: 16px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .form {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>Quiz Game</h1>
+        <span>Vue + Python WebSocket</span>
+      </div>
+      <div class="status">
+        Статус: <strong>{{ statusText }}</strong>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="main">
+        <template v-if="screen === 'connect'">
+          <h2 class="screen-title">Підключення до гри</h2>
+          <p class="hint">Введи ім'я. Сервер уже вказаний автоматично, якщо сторінка відкрита з локальної мережі.</p>
+          <div class="form">
+            <label>
+              Ім'я гравця
+              <input v-model.trim="name" maxlength="24" @keyup.enter="connect">
+            </label>
+            <button class="primary" :disabled="!name || connected" @click="connect">Підключитися</button>
+          </div>
+          <p class="message bad" v-if="error">{{ error }}</p>
+        </template>
+
+        <template v-else-if="screen === 'lobby'">
+          <h2 class="screen-title">Очікування старту</h2>
+          <p class="hint">Коли всі зайшли, адміністратор натискає Enter у вікні сервера. Мінімум гравців: {{ minPlayers }}.</p>
+          <p class="message">Підключено: {{ players.length }} / {{ maxPlayers }}</p>
+        </template>
+
+        <template v-else-if="screen === 'between'">
+          <h2 class="screen-title">{{ serverMessage }}</h2>
+          <p class="hint">Зараз з'явиться наступне питання.</p>
+        </template>
+
+        <template v-else-if="screen === 'question'">
+          <div class="meta">
+            <span>Питання {{ question.number }} з {{ question.total }}</span>
+            <span class="timer">{{ timer }} с</span>
+          </div>
+          <h2 class="question">{{ question.question }}</h2>
+          <div class="answers">
+            <button
+              v-for="key in optionKeys"
+              :key="key"
+              class="answer"
+              :disabled="answerLocked || timer <= 0"
+              @click="sendAnswer(key)"
+            >
+              <span class="answer-key">{{ key }}</span>
+              <span>{{ question.options[key] }}</span>
+            </button>
+          </div>
+          <p class="message">{{ answerMessage }}</p>
+        </template>
+
+        <template v-else-if="screen === 'round'">
+          <h2 class="screen-title">Результат раунду</h2>
+          <p class="hint">Правильна відповідь: <strong>{{ round.correct_answer }}</strong>. {{ round.correct_text }}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Гравець</th>
+                <th>Відповідь</th>
+                <th>Бали</th>
+                <th>Рахунок</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(row, index) in round.results" :key="row.name">
+                <td>{{ index + 1 }}</td>
+                <td>{{ row.name }}</td>
+                <td :class="row.correct ? 'good' : 'bad'">{{ row.answer || '-' }}</td>
+                <td>{{ row.points }}</td>
+                <td>{{ row.score }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </template>
+
+        <template v-else-if="screen === 'over'">
+          <h2 class="screen-title">Гру завершено</h2>
+          <p class="hint" v-if="winner">Переможець: <strong>{{ winner.name }}</strong>, {{ winner.score }} балів.</p>
+          <p class="hint" v-else>Немає переможця.</p>
+        </template>
+      </section>
+
+      <aside class="side">
+        <h2 class="screen-title">Лідери</h2>
+        <p class="empty" v-if="leaderboard.length === 0">Поки немає гравців.</p>
+        <table v-else>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Ім'я</th>
+              <th>Бали</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row, index) in leaderboard" :key="row.name">
+              <td>{{ index + 1 }}</td>
+              <td>{{ row.name }}</td>
+              <td>{{ row.score }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const { createApp } = Vue;
+
+    createApp({
+      data() {
+        return {
+          optionKeys: ["A", "B", "C", "D"],
+          socket: null,
+          connected: false,
+          screen: "connect",
+          statusText: "не підключено",
+          name: "Гравець",
+          error: "",
+          players: [],
+          leaderboard: [],
+          minPlayers: 2,
+          maxPlayers: 20,
+          question: null,
+          timer: 0,
+          timerId: null,
+          answerLocked: false,
+          answerMessage: "",
+          serverMessage: "",
+          round: null,
+          winner: null
+        };
+      },
+      methods: {
+        connect() {
+          if (!this.name || this.connected) return;
+          this.error = "";
+          const protocol = location.protocol === "https:" ? "wss" : "ws";
+          const url = `${protocol}://${location.host}/ws`;
+          this.socket = new WebSocket(url);
+          this.statusText = "підключення...";
+
+          this.socket.addEventListener("open", () => {
+            this.connected = true;
+            this.statusText = "підключено";
+            this.send({ type: "join", name: this.name });
+          });
+
+          this.socket.addEventListener("message", (event) => {
+            this.handleMessage(JSON.parse(event.data));
+          });
+
+          this.socket.addEventListener("close", () => {
+            this.connected = false;
+            if (this.screen !== "over") {
+              this.statusText = "з'єднання закрито";
+            }
+          });
+
+          this.socket.addEventListener("error", () => {
+            this.error = "Не вдалося підключитися до сервера.";
+            this.statusText = "помилка";
+          });
+        },
+        send(message) {
+          if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify(message));
+          }
+        },
+        handleMessage(message) {
+          if (message.type === "joined") {
+            return;
+          }
+          if (message.type === "lobby") {
+            this.screen = "lobby";
+            this.players = message.players || [];
+            this.leaderboard = this.players;
+            this.minPlayers = message.min_players || 2;
+            this.maxPlayers = message.max_players || 20;
+          } else if (message.type === "game_started") {
+            this.screen = "between";
+            this.serverMessage = message.message || "Гра почалась!";
+          } else if (message.type === "question") {
+            this.showQuestion(message);
+          } else if (message.type === "answer_received") {
+            this.answerLocked = true;
+            this.answerMessage = `Відповідь ${message.answer} прийнята.`;
+          } else if (message.type === "round_result") {
+            this.showRound(message);
+          } else if (message.type === "game_over") {
+            this.showGameOver(message);
+          } else if (message.type === "error") {
+            this.error = message.message || "Помилка.";
+            alert(this.error);
+          }
+        },
+        showQuestion(message) {
+          this.screen = "question";
+          this.question = message;
+          this.leaderboard = message.scores || this.leaderboard;
+          this.answerLocked = false;
+          this.answerMessage = "Оберіть одну відповідь.";
+          this.timer = message.round_seconds || 0;
+          clearInterval(this.timerId);
+          this.timerId = setInterval(() => {
+            this.timer = Math.max(0, this.timer - 1);
+            if (this.timer === 0) {
+              clearInterval(this.timerId);
+              if (!this.answerLocked) {
+                this.answerMessage = "Час вийшов.";
+              }
+            }
+          }, 1000);
+        },
+        sendAnswer(answer) {
+          if (!this.question || this.answerLocked) return;
+          this.answerLocked = true;
+          this.answerMessage = `Надсилаю відповідь ${answer}...`;
+          this.send({
+            type: "answer",
+            question_index: this.question.index,
+            answer
+          });
+        },
+        showRound(message) {
+          clearInterval(this.timerId);
+          this.round = message;
+          this.leaderboard = message.leaderboard || [];
+          this.screen = "round";
+        },
+        showGameOver(message) {
+          clearInterval(this.timerId);
+          this.winner = message.winner;
+          this.leaderboard = message.leaderboard || [];
+          this.screen = "over";
+          this.statusText = "гру завершено";
+        }
+      }
+    }).mount("#app");
+  </script>
+</body>
 </html>
